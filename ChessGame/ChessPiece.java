@@ -28,6 +28,17 @@ public class ChessPiece {
 		return false;
 	}
 	
+	public static char PieceColor(char Piece){
+		if (isBlack(Piece)){
+			return 'b';
+		} else if (isWhite(Piece)){
+			return 'w';
+		} else {
+			return 'e';
+		}
+		
+	}
+	
 	public static boolean isPawn(char Piece){
 		return (Piece == BlackPawn || Piece == WhitePawn);
 	}
