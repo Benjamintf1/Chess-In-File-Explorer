@@ -1,6 +1,14 @@
 package chessGame;
 
 public class ChessPiece {
+	private static char[][] boardcolor = {{'b','w','b', 'w', 'b', 'w', 'b', 'w'},
+		  {'w', 'b','w','b', 'w', 'b', 'w', 'b'},
+		  {'b','w','b', 'w', 'b', 'w', 'b', 'w'},
+		  {'w', 'b','w','b', 'w', 'b', 'w', 'b'},
+		  {'b','w','b', 'w', 'b', 'w', 'b', 'w'},
+		  {'w', 'b','w','b', 'w', 'b', 'w', 'b'},
+		  {'b','w','b', 'w', 'b', 'w', 'b', 'w'},
+		  {'w', 'b','w','b', 'w', 'b', 'w', 'b'}};
 	public final static char BlackPawn = '\u265F';
 	public final static char BlackKnight = '\u265E';
 	public final static char BlackBishop = '\u265D';
@@ -14,24 +22,48 @@ public class ChessPiece {
 	public final static char WhiteQueen = '\u2655';
 	public final static char WhiteKing = '\u2654';
 	
-	public static boolean isWhite(char Piece){
-		if (Piece <= WhitePawn && Piece >= WhiteKing){
+	
+	public char piece;
+	public int row;
+	public int col;
+	public boolean flag; //set if pawn has double-moved, or king/knight has not moved. 
+	
+	
+	public ChessPiece(char piece,  boolean flag){
+		this.piece = piece;
+		this.flag = flag;
+
+	}
+
+	
+	
+
+	
+	public String FileName(int col, int row){
+		return ((char) ('a' + col)) + Integer.toString(row + 1) + "." + boardcolor[row][col] + piece;
+		
+	}
+	
+	
+	
+	public boolean isWhite(){
+		if (piece <= WhitePawn && piece >= WhiteKing){
 			return true;
 		}
 		return false;
 	}
 	
-	public static boolean isBlack(char Piece){
-		if (Piece <= BlackPawn && Piece >= BlackKing){
+	public boolean isBlack(){
+		if (piece <= BlackPawn && piece >= BlackKing){
 			return true;
 		}
 		return false;
 	}
 	
-	public static char PieceColor(char Piece){
-		if (isBlack(Piece)){
+	public char pieceColor(){
+		if (isBlack()){
 			return 'b';
-		} else if (isWhite(Piece)){
+		} else if (isWhite()){
 			return 'w';
 		} else {
 			return 'e';
@@ -39,28 +71,28 @@ public class ChessPiece {
 		
 	}
 	
-	public static boolean isPawn(char Piece){
-		return (Piece == BlackPawn || Piece == WhitePawn);
+	public boolean isPawn(){
+		return (piece == BlackPawn || piece == WhitePawn);
 	}
-	public static boolean isKnight(char Piece){
-		return (Piece == BlackKnight || Piece == WhiteKnight);
+	public boolean isKnight(){
+		return (piece == BlackKnight || piece == WhiteKnight);
 	
 	}
 	
-	public static boolean isBishop(char Piece){
-		return (Piece == BlackBishop || Piece == WhiteBishop);
+	public boolean isBishop(){
+		return (piece == BlackBishop || piece == WhiteBishop);
 	}
 	
-	public static boolean isRook(char Piece){
-		return (Piece == BlackRook || Piece == WhiteRook);
+	public boolean isRook(){
+		return (piece == BlackRook || piece == WhiteRook);
 	}
 	
-	public static boolean isQueen(char Piece){
-		return (Piece == BlackQueen || Piece == WhiteQueen);
+	public boolean isQueen(){
+		return (piece == BlackQueen || piece == WhiteQueen);
 	}
 	
-	public static boolean isKing(char Piece){
-		return (Piece == BlackQueen || Piece == WhiteQueen);
+	public boolean isKing(){
+		return (piece == BlackQueen || piece == WhiteQueen);
 	}
 	
 }
