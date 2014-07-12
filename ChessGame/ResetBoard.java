@@ -24,7 +24,7 @@ public class ResetBoard {
 		
 		
 		File folder = new File(".");
-		Pattern p = Pattern.compile("(([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"])|\\.lastclick|\\.whoseturn");
+		Pattern p = Pattern.compile("(([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"])|z\\.lastclick|z\\.whoseturn");
 		for(String file: folder.list()){
 			if (p.matcher(file).matches()) {
 				File filetodelete = new File(file);
@@ -48,7 +48,7 @@ public class ResetBoard {
 				e.printStackTrace();
 			}
 		}
-		File whoseturnFile = new File(".whoseturn");
+		File whoseturnFile = new File("z.whoseturn");
 		try {
 			whoseturnFile.createNewFile();
 			FileWriter fw = new FileWriter(whoseturnFile);

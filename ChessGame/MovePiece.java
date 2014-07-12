@@ -51,9 +51,9 @@ public class MovePiece {
 			workingfolder = argument.getParentFile();
 			
 			
-			File lastclickfile = new File(workingfolder, ".lastclick" );
+			File lastclickfile = new File(workingfolder, "z.lastclick" );
 			
-			File whosemovefile = new File(workingfolder, ".whoseturn");
+			File whosemovefile = new File(workingfolder, "z.whoseturn");
 			try {
 				BufferedReader br = new BufferedReader(new FileReader(whosemovefile));
 				String line = br.readLine();
