@@ -1,5 +1,7 @@
 package chessGame;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
@@ -22,24 +24,38 @@ public class ResetBoard {
 		
 		
 		File folder = new File(".");
-		Pattern p = Pattern.compile("[a-h][1-8]\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
+		Pattern p = Pattern.compile("(([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"])|\\.lastclick|\\.whoseturn");
 		for(String file: folder.list()){
 			if (p.matcher(file).matches()) {
 				File filetodelete = new File(file);
 				filetodelete.delete();
-				System.out.print("deleted ");
 			}
-			System.out.println(file);
 		}
 		
 		for (String file: board){
 			File filetocreate = new File(file);
 			try {
 				filetocreate.createNewFile();
+				
+				char piecechar = file.charAt(4);
+				if (piecechar == ChessPiece.BlackKing || piecechar ==  ChessPiece.BlackRook || piecechar == ChessPiece.WhiteRook || piecechar == ChessPiece.WhiteKing ){
+					FileWriter fw = new FileWriter(filetocreate);
+					fw.write("This king or rook has not moved yet.");
+					fw.close();
+				}
 			} catch (IOException e) {
-				System.out.println("Failed to create file " + file);
+				System.out.println("Failed to create or write to file " + file);
 				e.printStackTrace();
 			}
+		}
+		File whoseturnFile = new File(".whoseturn");
+		try {
+			whoseturnFile.createNewFile();
+			FileWriter fw = new FileWriter(whoseturnFile);
+			fw.write("w");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		

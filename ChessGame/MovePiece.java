@@ -3,8 +3,14 @@
 //please forgive me for this code...it's bad. 
 package chessGame;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 
 //col = abcdefgh
@@ -24,22 +30,97 @@ public class MovePiece {
 	
 	
 	public static void main(String[] args) {
-		board = new ChessPiece[8][8];
+
+		
+		
+		
+		
 		
 		if (args.length == 1){
+			Pattern chessPieceFile = Pattern.compile("([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
+			File argument = new File(args[0]);
+			if (!argument.exists()){
+				System.out.println("I don't know what to do here, like, read up on the readme or something, because the argument you passed through there isn't a file");
+				System.exit(1); //peace out
+			}
 			
+			workingfolder = argument.getParentFile();
+			
+			
+			File lastmovefile = new File(workingfolder, ".lastclick" );
+			
+			File whosemovefile = new File(workingfolder, ".whoseturn");
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(whosemovefile));
+				String line = br.readLine();
+				whoseturn = line.charAt(0);
+				if (whoseturn == 'w' | whoseturn == 'b'){
+					System.exit(1);
+				}
+				
+			} catch (Exception e) {
+				
+				e.printStackTrace();
+				System.exit(1);
+			}
+			if (!whosemovefile.exists()){
+				System.out.println("");
+			}
+			
+			if (!chessPieceFile.matcher(argument.getName()).matches()){
+				System.out.println("I don't know what to do here, like, read up on the readme or something, because the argument you passed through there isn't a chessPiecefile");
+				System.exit(1); //peace out
+			}
+			if (lastmovefile.exists()){
+				//this is what happens if we want to actually process a move. 
+				board = new ChessPiece[8][8];
+				
+				
+				
+				
+				
+			} else {
+				try {
+					
+					lastmovefile.createNewFile();
+					
+					ChessPiece currentPiece = new ChessPiece(argument.getName(), false);
+					if (currentPiece.pieceColor() != whoseturn){
+						System.exit(1);
+					}
+					
+					
+					FileWriter fw = new FileWriter(lastmovefile);
+					fw.write(argument.getName());
+					fw.close();
+				} catch (IOException e) {
+					System.out.println("I couldn't create a file, whoops.");
+					e.printStackTrace();
+					System.exit(1); //peace out					
+				}
+				
+				
+				
+			}
+			
+			
+			
+			
+			
+		} else {
+			System.out.println("This program only supports one argument at the moment(the file you are clicking) sorry.");
 		}
 	}
 	
 	
-	private ArrayList<FileAction> ValidatePawn(int col1, int row1, int col2, int row2){
+	private ArrayList<ChessAction> ValidatePawn(int col1, int row1, int col2, int row2){
 		
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
 		
 		int unitVectorCol;
 		if (firstsquare.pieceColor() == 'w') {
-			unitVectorCol = 1;
+			unitVectorCol = 1; 
 		} else {
 			unitVectorCol = -1;
 		}
@@ -60,16 +141,16 @@ public class MovePiece {
 				if (secondPiece.pieceColor() != firstsquare.pieceColor()) {
 					if (secondPiece.isPawn()) {
 						if (secondPiece.flag) {
-							ArrayList<FileAction> list = new ArrayList<FileAction>();
+							ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 							
-							list.add(new FileAction(firstsquare.FileName(col1, row1),"remove"));
-							list.add(new FileAction(secondsquare.FileName(col2, row2),"remove"));
-							list.add(new FileAction(secondPiece.FileName(col2, row2-unitVectorCol),"remove"));
+							list.add(new ChessAction(firstsquare,"remove"));
+							list.add(new ChessAction(secondsquare,"remove"));
+							list.add(new ChessAction(secondPiece,"remove"));
 							
 							
-							list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-							list.add(new FileAction(emptyPiece.FileName(col2, row2-unitVectorCol),"create"));
-							list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
+							list.add(new ChessAction(emptyPiece.MovedPiece(col1, row1),"create"));
+							list.add(new ChessAction(emptyPiece.MovedPiece(col2, row2-unitVectorCol),"create"));
+							list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 							
 							
 							return list;
@@ -82,14 +163,17 @@ public class MovePiece {
 			if ( firstsquare.pieceColor() == secondsquare.pieceColor()){
 				return null;
 			}
+			//capture
+			ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 			
-			ArrayList<FileAction> list = new ArrayList<FileAction>();
+			list.add(new ChessAction(firstsquare,"remove"));
+			list.add(new ChessAction(secondsquare,"remove"));
 			
-			list.add(new FileAction(firstsquare.FileName(col1, row1),"remove"));
-			list.add(new FileAction(secondsquare.FileName( col2, row2),"remove"));
-			
-			list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-			list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
+			list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
+			if (row2 == 7 || row2 == 0){
+				list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"promote"));
+			}
 			
 			
 			return list;
@@ -112,18 +196,18 @@ public class MovePiece {
 				return null;
 			}
 			
-			ArrayList<FileAction> list = new ArrayList<FileAction>();
+			ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 			
-			list.add(new FileAction(firstsquare.FileName( col1, row1),"remove"));
-			list.add(new FileAction(secondsquare.FileName( col2, row2),"remove"));
+			list.add(new ChessAction(firstsquare,"remove"));
+			list.add(new ChessAction(secondsquare,"remove"));
 			
-			list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-			list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
-			
-			list.add(new FileAction(firstsquare.FileName( col2, row2),"write"));
-			
+			list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
+			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"flag"));
 			
 			return list;
+			
+			
 			
 		} else if ( (Math.abs(row2 - row1) == 1) ){ // single move forward
 			if ( (row2 - row1) != unitVectorCol ) {
@@ -134,13 +218,17 @@ public class MovePiece {
 				return null;
 			}
 			
-			ArrayList<FileAction> list = new ArrayList<FileAction>();
+			ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 			
-			list.add(new FileAction(firstsquare.FileName( col1, row1),"remove"));
-			list.add(new FileAction(secondsquare.FileName(col2, row2),"remove"));
+			list.add(new ChessAction(firstsquare,"remove"));
+			list.add(new ChessAction(secondsquare,"remove"));
 			
-			list.add(new FileAction(emptyPiece.FileName(col1, row1),"create"));
-			list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
+			list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
+			
+			if (row2 == 7 || row2 == 0){
+				list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"promote"));
+			}
 			
 			
 			return list;
@@ -150,7 +238,7 @@ public class MovePiece {
 		return null;
 	}
 	
-	private ArrayList<FileAction> ValidateRook(int col1, int row1, int col2, int row2){
+	private ArrayList<ChessAction> ValidateRook(int col1, int row1, int col2, int row2){
 		
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
@@ -176,19 +264,19 @@ public class MovePiece {
 			return null;
 		}
 		
-		ArrayList<FileAction> list = new ArrayList<FileAction>();
+		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new FileAction(firstsquare.FileName( col1, row1),"remove"));
-		list.add(new FileAction(secondsquare.FileName( col2, row2),"remove"));
+		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(secondsquare,"remove"));
 		
-		list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-		list.add(new FileAction(firstsquare.FileName(col2, row2),"create"));
+		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+		list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 		
 		
 		return list;
 	}
 	
-	private ArrayList<FileAction> ValidateKnight(int col1, int row1, int col2, int row2){
+	private ArrayList<ChessAction> ValidateKnight(int col1, int row1, int col2, int row2){
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
 		
@@ -203,20 +291,20 @@ public class MovePiece {
 			return null;
 		}
 		
-		ArrayList<FileAction> list = new ArrayList<FileAction>();
+		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new FileAction(firstsquare.FileName( col1, row1),"remove"));
-		list.add(new FileAction(secondsquare.FileName(col2,row2),"remove"));
+		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(secondsquare,"remove"));
 		
-		list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-		list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
+		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+		list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 		
 		
 		return list;
 		
 	}
 	
-	private ArrayList<FileAction> ValidateBishop(int col1, int row1, int col2, int row2){
+	private ArrayList<ChessAction> ValidateBishop(int col1, int row1, int col2, int row2){
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
 		
@@ -245,21 +333,21 @@ public class MovePiece {
 			return null;
 		}
 		
-		ArrayList<FileAction> list = new ArrayList<FileAction>();
+		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new FileAction(firstsquare.FileName(col1, row1),"remove"));
-		list.add(new FileAction(secondsquare.FileName( col2, row2),"remove"));
+		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(secondsquare,"remove"));
 		
-		list.add(new FileAction(emptyPiece.FileName(col1, row1),"create"));
-		list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
+		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+		list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 		
 		
 		return list;
 	}
 	
-	private ArrayList<FileAction> ValidateQueen(int col1, int row1, int col2, int row2){
+	private ArrayList<ChessAction> ValidateQueen(int col1, int row1, int col2, int row2){
 		
-		ArrayList<FileAction> bishopmove = ValidateBishop(col1, row1, col2, row2);
+		ArrayList<ChessAction> bishopmove = ValidateBishop(col1, row1, col2, row2);
 		
 		if (bishopmove == null){
 			return ValidateRook(col1, row1, col2, row2);
@@ -267,7 +355,7 @@ public class MovePiece {
 		return bishopmove; //The code just keeps getting worse, this hasn't happened in a project before...I still feel like a horrible person.
 	}
 	
-	private ArrayList<FileAction> ValidateKing(int col1, int row1, int col2, int row2){
+	private ArrayList<ChessAction> ValidateKing(int col1, int row1, int col2, int row2){
 		
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
@@ -301,17 +389,17 @@ public class MovePiece {
 							return null;
 						}
 					}
-					ArrayList<FileAction> list = new ArrayList<FileAction>();
+					ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 					
-					list.add(new FileAction(firstsquare.FileName( col1, row1),"remove"));
-					list.add(new FileAction(secondsquare.FileName( col2, row2),"remove"));
-					list.add(new FileAction(board[rookcol1][row1].FileName( rookcol1, row1),"remove"));
-					list.add(new FileAction(emptyPiece.FileName( rookcol2, row1),"remove"));
+					list.add(new ChessAction(firstsquare,"remove"));
+					list.add(new ChessAction(secondsquare,"remove"));
+					list.add(new ChessAction(board[rookcol1][row1],"remove"));
+					list.add(new ChessAction(emptyPiece.MovedPiece( rookcol2, row1),"remove"));
 					
-					list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-					list.add(new FileAction(emptyPiece.FileName( rookcol1, row1),"create"));
-					list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
-					list.add(new FileAction(board[rookcol1][row1].FileName( rookcol2, row1),"create"));
+					list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+					list.add(new ChessAction(emptyPiece.MovedPiece( rookcol1, row1),"create"));
+					list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
+					list.add(new ChessAction(board[rookcol1][row1].MovedPiece( rookcol2, row1),"create"));
 					
 					return list;
 					
@@ -328,13 +416,13 @@ public class MovePiece {
 		
 		
 		
-		ArrayList<FileAction> list = new ArrayList<FileAction>();
+		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new FileAction(firstsquare.FileName( col1, row1),"remove"));
-		list.add(new FileAction(secondsquare.FileName( col2, row2),"remove"));
+		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(secondsquare,"remove"));
 		
-		list.add(new FileAction(emptyPiece.FileName( col1, row1),"create"));
-		list.add(new FileAction(firstsquare.FileName( col2, row2),"create"));
+		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
+		list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 		
 		
 		return list;

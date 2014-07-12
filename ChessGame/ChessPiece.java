@@ -28,18 +28,37 @@ public class ChessPiece {
 	public int col;
 	public boolean flag; //set if pawn has double-moved, or king/knight has not moved. 
 	
-	
-	public ChessPiece(char piece,  boolean flag){
+	public ChessPiece(char piece, boolean flag){
 		this.piece = piece;
+		this.flag = flag;
+		this.col = 0;
+		this.row = 0;
+	}
+	
+	public ChessPiece(String file, boolean flag){
+		this.col = 'a'-file.charAt(0);
+		this.row = Character.getNumericValue(file.charAt(1));
+		this.piece = file.charAt(4);
+		this.flag = flag;
+	}
+	
+	public ChessPiece(char piece, boolean flag, int col,int row){
+		this.piece = piece;
+		this.col = col;
+		this.row = row;
 		this.flag = flag;
 
 	}
 
 	
-	
+	public ChessPiece MovedPiece(int row, int col){
+		ChessPiece newPiece = new ChessPiece(piece, false, col, row);
+		return newPiece;
+		
+	}
 
 	
-	public String FileName(int col, int row){
+	public String FileName(){
 		return ((char) ('a' + col)) + Integer.toString(row + 1) + "." + boardcolor[row][col] + piece;
 		
 	}
