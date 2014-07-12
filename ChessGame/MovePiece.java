@@ -5,7 +5,7 @@ package chessGame;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
+//import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,10 +22,14 @@ import java.util.regex.Pattern;
 
 public class MovePiece {
 	private static ChessPiece[][] board;
-
+	
+	
+	
+	
+	
 	private static char whoseturn;
 	private static File workingfolder;
-	private static File problemsFile;
+	//private static File problemsFile;
 	private static ChessPiece emptyPiece = new ChessPiece('e', false);
 	
 	
@@ -37,7 +41,7 @@ public class MovePiece {
 		
 		
 		if (args.length == 1){
-			Pattern chessPieceFile = Pattern.compile("([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
+			Pattern validargument = Pattern.compile("([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
 			File argument = new File(args[0]);
 			if (!argument.exists()){
 				System.out.println("I don't know what to do here, like, read up on the readme or something, because the argument you passed through there isn't a file");
@@ -47,7 +51,7 @@ public class MovePiece {
 			workingfolder = argument.getParentFile();
 			
 			
-			File lastmovefile = new File(workingfolder, ".lastclick" );
+			File lastclickfile = new File(workingfolder, ".lastclick" );
 			
 			File whosemovefile = new File(workingfolder, ".whoseturn");
 			try {
@@ -57,6 +61,7 @@ public class MovePiece {
 				if (whoseturn == 'w' | whoseturn == 'b'){
 					System.exit(1);
 				}
+				br.close();
 				
 			} catch (Exception e) {
 				
@@ -67,30 +72,169 @@ public class MovePiece {
 				System.out.println("");
 			}
 			
-			if (!chessPieceFile.matcher(argument.getName()).matches()){
+			if (!validargument.matcher(argument.getName()).matches()){
 				System.out.println("I don't know what to do here, like, read up on the readme or something, because the argument you passed through there isn't a chessPiecefile");
 				System.exit(1); //peace out
 			}
-			if (lastmovefile.exists()){
+			if (lastclickfile.exists()){
 				//this is what happens if we want to actually process a move. 
+				//it's happening. 
 				board = new ChessPiece[8][8];
 				
+				String lastpieceFile = null; //again, must be set
+				ChessPiece theKing = null; //this should be set unless the user deleted their king piece or something.
+				ChessPiece lastClick = null; // This is to quash the error. If it wasn't initialized, then the program should have already exited. 
+				try {
+					BufferedReader br = new BufferedReader(new FileReader(lastclickfile));
+					lastpieceFile = br.readLine();
+					br.close();
+					lastClick = new ChessPiece(lastpieceFile, new File(workingfolder, lastpieceFile).length() > 0);
+					
+					Pattern validpiece = Pattern.compile("[a-h][1-8]\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
+					
+					for(File file: workingfolder.listFiles()){
+						if (validpiece.matcher(file.getName()).matches()) {
+							boolean flag = (file.length() > 0);
+							ChessPiece currentpiece = new ChessPiece(file.getName(), flag);
+							board[currentpiece.col][currentpiece.row] = currentpiece;
+							if(currentpiece.isKing() && currentpiece.pieceColor() == whoseturn){
+								theKing = currentpiece;
+							}
+						}
+					}
+					
+					
+				} catch (Exception e) {
+					System.out.println("Something happened wrong with reading from the \"last click\" file. " );
+					e.printStackTrace();
+					System.exit(1);
+				}
+				Pattern isPromotion = Pattern.compile("promote\\.[wb][" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
 				
-				
-				
+				if( isPromotion.matcher(argument.getName()).matches()){
+					File newPiece = new File(workingfolder, ((char) ('a' + lastClick.col)) + Integer.toString(lastClick.row + 1)+argument.getName().substring(7)) ;
+					new File(workingfolder, lastpieceFile).delete();
+					try {
+						newPiece.createNewFile();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						System.exit(1);
+					}
+				}
+				else{
+					ChessPiece nextClick = new ChessPiece(argument.getName(), argument.length() > 0);
+					ArrayList<ChessAction> thisMove = ValidateMove( lastClick.col ,  lastClick.row,  nextClick.col,  nextClick.row);
+					for( ChessAction action : thisMove){
+						switch(action.actiontype){
+						case "remove":
+							board[action.chessPiece.col][action.chessPiece.row] = emptyPiece.MovedPiece(action.chessPiece.col, action.chessPiece.row);
+							break;
+						case "create":
+							board[action.chessPiece.col][action.chessPiece.row] = action.chessPiece;
+							break;
+						case "flag":
+							board[action.chessPiece.col][action.chessPiece.row].flag = true;
+							break;
+						case "promote":
+							break;
+						default:
+							System.out.println("Something happened wrong while parsing the action list");
+							System.exit(1);
+						}
+						
+					}
+					for(ChessPiece[] array : board){
+						for (ChessPiece piece : array){
+							if( piece.pieceColor() != 'e' && piece.pieceColor() != whoseturn){
+								if(ValidateMove( piece.col ,  piece.row,  theKing.col,  theKing.row) != null){
+									System.out.println("This move would put the king in check, it is not valid.");
+									System.exit(1);
+								}
+							}
+						}
+					}
+					
+					lastclickfile.delete();
+					
+					
+					
+					
+					
+					try {
+						
+						boolean changewhoseturn = true;
+						for( ChessAction action : thisMove){
+							switch(action.actiontype){
+							case "remove":
+								new File(workingfolder, action.chessPiece.FileName()).delete();
+								break;
+							case "create":
+								new File(workingfolder, action.chessPiece.FileName()).createNewFile();
+								break;
+							case "flag":
+								FileWriter flagger = new FileWriter(new File(workingfolder, action.chessPiece.FileName()));
+								flagger.write("This file is a pawn that has moved twice, it can be en passanted");
+								flagger.close();
+								break;
+							case "promote":
+								char[] promotePieces;
+								if (action.chessPiece.pieceColor() == 'w'){
+									promotePieces = ChessPiece.whitepromote;
+								} else {
+									promotePieces = ChessPiece.blackpromote;
+								}
+								
+								for( char pieceUnicode : promotePieces){
+									new File(workingfolder, "promote" + '.' + action.chessPiece.BoardColor() + pieceUnicode).createNewFile();
+								}
+								
+								lastclickfile.createNewFile();
+								FileWriter writelastclick = new FileWriter(lastclickfile);
+								writelastclick.write(action.chessPiece.FileName());
+								writelastclick.close();
+								
+								changewhoseturn = false;
+								break;
+							default:
+								System.out.println("Something happened wrong while parsing the action list");
+								System.exit(1);
+							}
+							
+						}
+						
+						if (changewhoseturn){
+							whosemovefile.delete();
+							whosemovefile.createNewFile();
+							FileWriter fw = new FileWriter(whosemovefile);
+							if(whoseturn == 'w'){
+								fw.write("b");
+							} else {
+								fw.write("w");
+							}
+							fw.close();
+						}
+						
+					} catch (IOException e) {
+						System.exit(1);
+						e.printStackTrace();
+					}
+					
+				}
 				
 			} else {
 				try {
 					
-					lastmovefile.createNewFile();
+					lastclickfile.createNewFile();
 					
 					ChessPiece currentPiece = new ChessPiece(argument.getName(), false);
 					if (currentPiece.pieceColor() != whoseturn){
+						System.out.println("This piece is not valid, you can only control your own pieces. ");
 						System.exit(1);
 					}
 					
 					
-					FileWriter fw = new FileWriter(lastmovefile);
+					FileWriter fw = new FileWriter(lastclickfile);
 					fw.write(argument.getName());
 					fw.close();
 				} catch (IOException e) {
@@ -113,7 +257,35 @@ public class MovePiece {
 	}
 	
 	
-	private ArrayList<ChessAction> ValidatePawn(int col1, int row1, int col2, int row2){
+	
+	private static ArrayList<ChessAction> ValidateMove(int col1, int row1, int col2, int row2){
+		if( board[col1][row1].isPawn()){
+			return ValidatePawn(col1, row1, col2, row2);
+		}
+		else if( board[col1][row1].isRook()){
+			return ValidateRook(col1, row1, col2, row2);
+		}
+		else if ( board[col1][row1].isKnight()){
+			return ValidateKnight(col1, row1, col2, row2);
+		}
+		else if ( board[col1][row1].isBishop()){
+			return ValidateBishop(col1, row1, col2, row2);
+		}
+		else if ( board[col1][row1].isQueen()){
+			return ValidateQueen(col1, row1, col2, row2);
+		}
+		else if ( board[col1][row1].isKing()){
+			return ValidateKing(col1, row1, col2, row2);
+		}
+		else {
+			System.out.println("Something went wrong...The piece you(or the program) is attempting to move is not a piece.");
+			System.exit(1);
+			return null;
+		}
+		
+	}
+	
+	private static ArrayList<ChessAction> ValidatePawn(int col1, int row1, int col2, int row2){
 		
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
@@ -238,7 +410,7 @@ public class MovePiece {
 		return null;
 	}
 	
-	private ArrayList<ChessAction> ValidateRook(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidateRook(int col1, int row1, int col2, int row2){
 		
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
@@ -276,7 +448,7 @@ public class MovePiece {
 		return list;
 	}
 	
-	private ArrayList<ChessAction> ValidateKnight(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidateKnight(int col1, int row1, int col2, int row2){
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
 		
@@ -304,7 +476,7 @@ public class MovePiece {
 		
 	}
 	
-	private ArrayList<ChessAction> ValidateBishop(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidateBishop(int col1, int row1, int col2, int row2){
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
 		
@@ -345,7 +517,7 @@ public class MovePiece {
 		return list;
 	}
 	
-	private ArrayList<ChessAction> ValidateQueen(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidateQueen(int col1, int row1, int col2, int row2){
 		
 		ArrayList<ChessAction> bishopmove = ValidateBishop(col1, row1, col2, row2);
 		
@@ -355,7 +527,7 @@ public class MovePiece {
 		return bishopmove; //The code just keeps getting worse, this hasn't happened in a project before...I still feel like a horrible person.
 	}
 	
-	private ArrayList<ChessAction> ValidateKing(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidateKing(int col1, int row1, int col2, int row2){
 		
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];

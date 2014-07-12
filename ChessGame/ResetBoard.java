@@ -1,5 +1,5 @@
 package chessGame;
-import java.io.BufferedReader;
+//import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -53,6 +53,7 @@ public class ResetBoard {
 			whoseturnFile.createNewFile();
 			FileWriter fw = new FileWriter(whoseturnFile);
 			fw.write("w");
+			fw.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

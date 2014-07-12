@@ -23,6 +23,9 @@ public class ChessPiece {
 	public final static char WhiteKing = '\u2654';
 	
 	
+	public final static char[] whitepromote = {WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen};
+	public final static char[] blackpromote = {BlackKnight, BlackBishop, BlackRook, BlackQueen};
+	
 	public char piece;
 	public int row;
 	public int col;
@@ -51,7 +54,7 @@ public class ChessPiece {
 	}
 
 	
-	public ChessPiece MovedPiece(int row, int col){
+	public ChessPiece MovedPiece(int col, int row){
 		ChessPiece newPiece = new ChessPiece(piece, false, col, row);
 		return newPiece;
 		
@@ -63,7 +66,9 @@ public class ChessPiece {
 		
 	}
 	
-	
+	public char BoardColor(){
+		return boardcolor[row][col];
+	}
 	
 	public boolean isWhite(){
 		if (piece <= WhitePawn && piece >= WhiteKing){
