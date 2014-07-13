@@ -38,9 +38,40 @@ public class ChessPiece {
 		this.row = 0;
 	}
 	
+	@Override
+	public String toString() {
+		String piecePrintNotUnicode;
+		if (isPawn()){
+			piecePrintNotUnicode = "Pawn";
+		}
+		else if (isRook()){
+			piecePrintNotUnicode = "Rook";
+		}
+		else if (isKnight()){
+			piecePrintNotUnicode = "Knight";
+		}
+		else if (isBishop()){
+			piecePrintNotUnicode = "Bishop";
+		}
+		else if (isQueen()){
+			piecePrintNotUnicode = "Queen";
+		}
+		else if (isKing()){
+			piecePrintNotUnicode = "King";
+			
+		} else if (piece == 'e'){
+			piecePrintNotUnicode = "e";
+		}
+		else {
+			piecePrintNotUnicode = "nothing correct" + piece;
+		}
+		return "ChessPiece [piece=" + piecePrintNotUnicode + ", row=" + row + ", col=" + col
+				+ ", flag=" + flag + "]";
+	}
+
 	public ChessPiece(String file, boolean flag){
-		this.col = 'a'-file.charAt(0);
-		this.row = Character.getNumericValue(file.charAt(1));
+		this.col = file.charAt(0)-'a';
+		this.row = Character.getNumericValue(file.charAt(1))-1;
 		this.piece = file.charAt(4);
 		this.flag = flag;
 	}
@@ -116,7 +147,7 @@ public class ChessPiece {
 	}
 	
 	public boolean isKing(){
-		return (piece == BlackQueen || piece == WhiteQueen);
+		return (piece == BlackKing || piece == WhiteKing);
 	}
 	
 }

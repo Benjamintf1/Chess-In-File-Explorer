@@ -30,7 +30,7 @@ public class MovePiece {
 	private static char whoseturn;
 	private static File workingfolder;
 	//private static File problemsFile;
-	private static ChessPiece emptyPiece = new ChessPiece('e', false);
+	private static ChessPiece emptyPiece = new ChessPiece('e', false);//this allows for easy placement of empty pieces. 
 	
 	
 	public static void main(String[] args) {
@@ -41,11 +41,14 @@ public class MovePiece {
 		
 		
 		if (args.length == 1){
-			Pattern validargument = Pattern.compile("([a-h][1-8])|(promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
+			
+			
+			Pattern validargument = Pattern.compile("([a-h][1-8]|promote)\\.[wb][e" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
 			File argument = new File(args[0]);
-			if (!argument.exists()){
+			
+			if (! argument.exists()){
 				System.out.println("I don't know what to do here, like, read up on the readme or something, because the argument you passed through there isn't a file");
-				System.exit(1); //peace out
+				System.exit(1); //TODO
 			}
 			
 			workingfolder = argument.getParentFile();
@@ -58,23 +61,24 @@ public class MovePiece {
 				BufferedReader br = new BufferedReader(new FileReader(whosemovefile));
 				String line = br.readLine();
 				whoseturn = line.charAt(0);
-				if (whoseturn == 'w' | whoseturn == 'b'){
-					System.exit(1);
+				if (!(whoseturn == 'w' | whoseturn == 'b')){
+					
+					System.exit(1);//TODO
 				}
 				br.close();
 				
 			} catch (Exception e) {
 				
 				e.printStackTrace();
-				System.exit(1);
+				System.exit(1); //TODO
 			}
 			if (!whosemovefile.exists()){
-				System.out.println("");
+				System.out.println("no whose move exits.");
+				System.exit(1);//todo
 			}
-			
 			if (!validargument.matcher(argument.getName()).matches()){
-				System.out.println("I don't know what to do here, like, read up on the readme or something, because the argument you passed through there isn't a chessPiecefile");
-				System.exit(1); //peace out
+				System.out.println("This is not a valid piece. ");
+				System.exit(1); //TODO
 			}
 			if (lastclickfile.exists()){
 				//this is what happens if we want to actually process a move. 
@@ -98,6 +102,7 @@ public class MovePiece {
 							ChessPiece currentpiece = new ChessPiece(file.getName(), flag);
 							board[currentpiece.col][currentpiece.row] = currentpiece;
 							if(currentpiece.isKing() && currentpiece.pieceColor() == whoseturn){
+								System.out.println("The king is " + currentpiece.toString());
 								theKing = currentpiece;
 							}
 						}
@@ -107,7 +112,8 @@ public class MovePiece {
 				} catch (Exception e) {
 					System.out.println("Something happened wrong with reading from the \"last click\" file. " );
 					e.printStackTrace();
-					System.exit(1);
+					lastclickfile.delete();
+					System.exit(1); //TODO
 				}
 				Pattern isPromotion = Pattern.compile("promote\\.[wb][" + ChessPiece.WhiteKing + "-" + ChessPiece.BlackPawn +"]");
 				
@@ -116,15 +122,33 @@ public class MovePiece {
 					new File(workingfolder, lastpieceFile).delete();
 					try {
 						newPiece.createNewFile();
+						lastclickfile.delete();
+						whosemovefile.delete();
+						whosemovefile.createNewFile();
+						FileWriter fw = new FileWriter(whosemovefile);
+						if(whoseturn == 'w'){
+							fw.write("b");
+						} else {
+							fw.write("w");
+						}
+						fw.close();
+						
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
+						
 						e.printStackTrace();
-						System.exit(1);
+						System.exit(1);//TODO
 					}
+					
+					
 				}
 				else{
 					ChessPiece nextClick = new ChessPiece(argument.getName(), argument.length() > 0);
 					ArrayList<ChessAction> thisMove = ValidateMove( lastClick.col ,  lastClick.row,  nextClick.col,  nextClick.row);
+					if (thisMove == null) {
+						System.out.println("invalid move");
+						lastclickfile.delete();
+						System.exit(1);
+					}
 					for( ChessAction action : thisMove){
 						switch(action.actiontype){
 						case "remove":
@@ -140,7 +164,7 @@ public class MovePiece {
 							break;
 						default:
 							System.out.println("Something happened wrong while parsing the action list");
-							System.exit(1);
+							System.exit(1); //TODO
 						}
 						
 					}
@@ -148,8 +172,10 @@ public class MovePiece {
 						for (ChessPiece piece : array){
 							if( piece.pieceColor() != 'e' && piece.pieceColor() != whoseturn){
 								if(ValidateMove( piece.col ,  piece.row,  theKing.col,  theKing.row) != null){
-									System.out.println("This move would put the king in check, it is not valid.");
-									System.exit(1);
+									
+									System.out.println("This move would put the king in check, it is not valid., the piece is " + piece.toString() + theKing.toString());
+									lastclickfile.delete();
+									System.exit(1);//TODO
 								}
 							}
 						}
@@ -198,7 +224,7 @@ public class MovePiece {
 								break;
 							default:
 								System.out.println("Something happened wrong while parsing the action list");
-								System.exit(1);
+								System.exit(1); //TODO
 							}
 							
 						}
@@ -216,21 +242,21 @@ public class MovePiece {
 						}
 						
 					} catch (IOException e) {
-						System.exit(1);
+						System.exit(1); //TODO
 						e.printStackTrace();
 					}
 					
 				}
 				
-			} else {
+			} else { //
 				try {
 					
 					lastclickfile.createNewFile();
 					
 					ChessPiece currentPiece = new ChessPiece(argument.getName(), false);
 					if (currentPiece.pieceColor() != whoseturn){
-						System.out.println("This piece is not valid, you can only control your own pieces. ");
-						System.exit(1);
+						System.out.println("This piece is not valid, you can only control your own pieces.");
+						System.exit(1); //TODO
 					}
 					
 					
@@ -240,7 +266,7 @@ public class MovePiece {
 				} catch (IOException e) {
 					System.out.println("I couldn't create a file, whoops.");
 					e.printStackTrace();
-					System.exit(1); //peace out					
+					System.exit(1); //TODO				
 				}
 				
 				
@@ -252,13 +278,13 @@ public class MovePiece {
 			
 			
 		} else {
-			System.out.println("This program only supports one argument at the moment(the file you are clicking) sorry.");
+			System.out.println("This program only supports one argument at the moment(the file you are clicking) sorry."); // wrong arguments supplied.
 		}
 	}
 	
 	
 	
-	private static ArrayList<ChessAction> ValidateMove(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidateMove(int col1, int row1, int col2, int row2){ //run respective Validate move, if wrong, exit. 
 		if( board[col1][row1].isPawn()){
 			return ValidatePawn(col1, row1, col2, row2);
 		}
@@ -278,19 +304,19 @@ public class MovePiece {
 			return ValidateKing(col1, row1, col2, row2);
 		}
 		else {
-			System.out.println("Something went wrong...The piece you(or the program) is attempting to move is not a piece.");
-			System.exit(1);
+			System.out.println("Something went wrong...The piece you(or the program) is attempting to move is not a piece."); 
+			System.exit(1); //TODO
 			return null;
 		}
 		
 	}
 	
-	private static ArrayList<ChessAction> ValidatePawn(int col1, int row1, int col2, int row2){
+	private static ArrayList<ChessAction> ValidatePawn(int col1, int row1, int col2, int row2){ //ugly
 		
-		ChessPiece firstsquare = board[col1][row1];
+		ChessPiece firstsquare = board[col1][row1]; //easy access.
 		ChessPiece secondsquare = board[col2][row2];
 		
-		int unitVectorCol;
+		int unitVectorCol; //set direction. 
 		if (firstsquare.pieceColor() == 'w') {
 			unitVectorCol = 1; 
 		} else {
@@ -298,22 +324,23 @@ public class MovePiece {
 		}
 		
 		
-		if (col1 != col2) {
-			if ( (row2 - row1) != unitVectorCol ) {
+		if (col1 != col2) { //must be a capture
+			if ( (row2 - row1) != unitVectorCol ) { //not moving forward. 
 				return null;
 			}
 			
-			if (Math.abs(col1 - col2) != 1){
+			if (Math.abs(col1 - col2) != 1){ // only by one
 				return null;
 			}
 			
 			if ( secondsquare.pieceColor() != 'e' ){
 				//en passant
 				ChessPiece secondPiece = board[col2][row2-unitVectorCol];
-				if (secondPiece.pieceColor() != firstsquare.pieceColor()) {
-					if (secondPiece.isPawn()) {
-						if (secondPiece.flag) {
-							ArrayList<ChessAction> list = new ArrayList<ChessAction>();
+				
+				if (secondPiece.pieceColor() != firstsquare.pieceColor()) { // can't capture own piece. 
+					if (secondPiece.isPawn()) {//must be a pawn. 
+						if (secondPiece.flag) {//that has moved twice
+							ArrayList<ChessAction> list = new ArrayList<ChessAction>();//complex move
 							
 							list.add(new ChessAction(firstsquare,"remove"));
 							list.add(new ChessAction(secondsquare,"remove"));
@@ -332,11 +359,11 @@ public class MovePiece {
 				return null;
 			}
 			
-			if ( firstsquare.pieceColor() == secondsquare.pieceColor()){
+			if ( firstsquare.pieceColor() == secondsquare.pieceColor()){ //can't capture own piece. 
 				return null;
 			}
 			//capture
-			ArrayList<ChessAction> list = new ArrayList<ChessAction>();
+			ArrayList<ChessAction> list = new ArrayList<ChessAction>(); //standard move
 			
 			list.add(new ChessAction(firstsquare,"remove"));
 			list.add(new ChessAction(secondsquare,"remove"));
@@ -344,7 +371,7 @@ public class MovePiece {
 			list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
 			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 			if (row2 == 7 || row2 == 0){
-				list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"promote"));
+				list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"promote"));//promote if on last row. 
 			}
 			
 			
@@ -361,36 +388,36 @@ public class MovePiece {
 			}
 			
 			if (board[col1][row1+unitVectorCol].pieceColor() != 'e'){
-				return null;
+				return null; // intermediary must be empty. 
 			}
 			
 			if ( board[col1][row2].pieceColor() != 'e'){
-				return null;
+				return null; //second space must also be empty. 
 			}
 			
-			ArrayList<ChessAction> list = new ArrayList<ChessAction>();
+			ArrayList<ChessAction> list = new ArrayList<ChessAction>();//standard move-ish
 			
 			list.add(new ChessAction(firstsquare,"remove"));
 			list.add(new ChessAction(secondsquare,"remove"));
 			
 			list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
 			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
-			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"flag"));
+			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"flag")); //allow for passant. 
 			
 			return list;
 			
 			
 			
 		} else if ( (Math.abs(row2 - row1) == 1) ){ // single move forward
-			if ( (row2 - row1) != unitVectorCol ) {
+			if ( (row2 - row1) != unitVectorCol ) { //right direction.
 				return null;
 			}
 			
-			if ( board[col1][row2].pieceColor() != 'e'){
+			if ( board[col1][row2].pieceColor() != 'e'){ //dest is empty.
 				return null;
 			}
 			
-			ArrayList<ChessAction> list = new ArrayList<ChessAction>();
+			ArrayList<ChessAction> list = new ArrayList<ChessAction>(); // standard move.
 			
 			list.add(new ChessAction(firstsquare,"remove"));
 			list.add(new ChessAction(secondsquare,"remove"));
@@ -399,7 +426,7 @@ public class MovePiece {
 			list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
 			
 			if (row2 == 7 || row2 == 0){
-				list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"promote"));
+				list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"promote"));//if on the last row, promote
 			}
 			
 			
@@ -407,36 +434,48 @@ public class MovePiece {
 		}
 		
 		
-		return null;
+		return null;//if not any of those cases, it's not valid. 
 	}
 	
 	private static ArrayList<ChessAction> ValidateRook(int col1, int row1, int col2, int row2){
 		
-		ChessPiece firstsquare = board[col1][row1];
+		ChessPiece firstsquare = board[col1][row1]; //easy access 
 		ChessPiece secondsquare = board[col2][row2];
 		
 		
-		int lengthCol = col1 - col2;
-		int lengthRow = row1 - row2;
-		if ( !(lengthCol != 0 && lengthRow == 0 || lengthRow != 0 && lengthCol == 0)) {
+		int lengthCol = col2-col1;
+		int lengthRow =  row2- row1;
+		
+		
+		if ( !((lengthCol != 0 && lengthRow == 0) || (lengthRow != 0 && lengthCol == 0))) { //make sure in straight line.
 			return null;
 		}
-		int unitVectorCol = lengthCol / Math.abs(lengthCol);
-		int unitVectorRow = lengthRow / Math.abs(lengthRow);
+		int unitVectorCol;
+		
+		if (lengthCol != 0){//prevent devision by 0. 
+			unitVectorCol = lengthCol / Math.abs(lengthCol); //get unit vector for both. 
+		} else {
+			unitVectorCol = 0;
+		}
+		int unitVectorRow;
+		if (lengthRow != 0){
+			unitVectorRow = lengthRow / Math.abs(lengthRow);
+		} else {
+			unitVectorRow = 0;
+		}
 
-
-		for (int i = 1; col2 != col1 + unitVectorCol*i && row2 != row1 + unitVectorRow*i; ++i){
+		for (int i = 1; col2 != col1 + unitVectorCol*i && row2 != row1 + unitVectorRow*i; ++i){//make sure there is no pieces blocking.
 			if (board[col1 + unitVectorCol*i][row1 + unitVectorRow*i].pieceColor() != 'e'){
 				return null;
 			}
 		}
 		
 	
-		if ( firstsquare.pieceColor() == secondsquare.pieceColor()){
+		if ( firstsquare.pieceColor() == secondsquare.pieceColor()){ //can't capture same colored piece. 
 			return null;
 		}
 		
-		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
+		ArrayList<ChessAction> list = new ArrayList<ChessAction>(); //standard move.
 		
 		list.add(new ChessAction(firstsquare,"remove"));
 		list.add(new ChessAction(secondsquare,"remove"));
@@ -452,20 +491,20 @@ public class MovePiece {
 		ChessPiece firstsquare = board[col1][row1];
 		ChessPiece secondsquare = board[col2][row2];
 		
-		int lengthCol = Math.abs(col1 - col2);
+		int lengthCol = Math.abs(col1 - col2); //used to make sure shape is correct. 
 		int lengthRow = Math.abs(row1 - row2);
 		
 		
-		if ( !(lengthCol == 2 && lengthRow == 1 || lengthRow == 2 && lengthCol == 1)) {
+		if ( !(lengthCol == 2 && lengthRow == 1 || lengthRow == 2 && lengthCol == 1)) { //check for valid shape. 
 			return null;
 		} 
-		if ( firstsquare.pieceColor() == secondsquare.pieceColor() ){
+		if ( firstsquare.pieceColor() == secondsquare.pieceColor() ){ //can't capture same colored piece. 
 			return null;
 		}
 		
 		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(firstsquare,"remove")); //standard move. 
 		list.add(new ChessAction(secondsquare,"remove"));
 		
 		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
@@ -477,37 +516,40 @@ public class MovePiece {
 	}
 	
 	private static ArrayList<ChessAction> ValidateBishop(int col1, int row1, int col2, int row2){
-		ChessPiece firstsquare = board[col1][row1];
+		ChessPiece firstsquare = board[col1][row1]; //easy accessers
 		ChessPiece secondsquare = board[col2][row2];
 		
 		
 		
-		int directionCol = col1 - col2;
-		int directionRow = row1 - row2;
+		int directionCol = col2- col1 ; //used to determine which direction we are going
+		int directionRow =  row2- row1;
 
 		
-		if ( !( Math.abs(directionCol) == Math.abs(directionRow) )) {
+		if ( !( Math.abs(directionCol) == Math.abs(directionRow) )) { //bishop must be diagonal. 
 			return null;
 		}
-		int unitVectorCol = directionCol / Math.abs(directionCol);
+		int unitVectorCol = directionCol / Math.abs(directionCol); // get the unit vector so we can use it as an iterator.
 		int unitVectorRow = directionRow / Math.abs(directionRow);
 
 
 		for (int i = 1; col2 != col1 + unitVectorCol*i && row2 != row1 + unitVectorRow*i; ++i){
-			if (board[col1 + unitVectorCol*i][row1 + unitVectorRow*i].pieceColor() != 'e'){
+			//until we reach the end, keep checking
+			if (board[col1 + unitVectorCol*i][row1 + unitVectorRow*i].pieceColor() != 'e'){ // if intermediary square is not empty, then it is an invalid move. 
 				return null;
+			} else {
+				System.out.println(board[col1 + unitVectorCol*i][row1 + unitVectorRow*i].pieceColor());
 			}
 		}
 		
 		
 		
-		if ( firstsquare.pieceColor() == secondsquare.pieceColor()){
+		if ( firstsquare.pieceColor() == secondsquare.pieceColor()){ //cannot capture same color piece. 
 			return null;
 		}
 		
 		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(firstsquare,"remove")); //standard move. 
 		list.add(new ChessAction(secondsquare,"remove"));
 		
 		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
@@ -521,57 +563,57 @@ public class MovePiece {
 		
 		ArrayList<ChessAction> bishopmove = ValidateBishop(col1, row1, col2, row2);
 		
-		if (bishopmove == null){
+		if (bishopmove == null){ //if it isn't a valid bishop move, then see if it'd be a valid rook move. 
+			System.out.println("problem in rook");
 			return ValidateRook(col1, row1, col2, row2);
 		}
+		System.out.println("problem in bishop");
 		return bishopmove; //The code just keeps getting worse, this hasn't happened in a project before...I still feel like a horrible person.
 	}
 	
 	private static ArrayList<ChessAction> ValidateKing(int col1, int row1, int col2, int row2){
 		
-		ChessPiece firstsquare = board[col1][row1];
+		ChessPiece firstsquare = board[col1][row1]; //easy access for endpoints
 		ChessPiece secondsquare = board[col2][row2];
 		
 		
-		int lengthRow = Math.abs(col1 - col2);
-		int lengthCol = Math.abs(row1 - row2);
+		int lengthRow = Math.abs(row1 - row2);
+		int lengthCol = Math.abs(col1 - col2);
 		
 		
-		if (lengthRow > 1 || lengthCol > 1) {
-			if (lengthCol == 2 && lengthRow == 0){
-				//castle
-				int rookcol1;
-				int rookcol2;
-				int iterator;
-				if (col1 == 2){
+		if (lengthRow > 1 || lengthCol > 1) { //it's either invalid, or castle
+			if (lengthCol == 2 && lengthRow == 0){ // it's a castle
+				int rookcol1; //where the rook is
+				int rookcol2; //where it's going
+				int iterator; 
+				if (col1 == 2){ //queen's side castle
 					iterator = -1;
 					rookcol1 = 0;
 					rookcol2 = 3;
-				} else {
+				} else { //king's side
 					iterator = 1;
 					rookcol1 = 7;
 					rookcol2 = 5;
 				}
 				
-				if(firstsquare.flag && board[rookcol1][row1].flag){
-					//make sure spaces bet
+				if(firstsquare.flag && board[rookcol1][row1].flag){ //make sure the king and rook havn't move
 					
-					for ( int i = iterator; i + col1 != rookcol1; i = i + iterator){
+					for ( int i = iterator; i + col1 != rookcol1; i = i + iterator){//check to see if the intermediary spaces are empty
 						if (board[col1 + i][row1].pieceColor() != 'e'){
-							return null;
+							return null; // if they are not, return a invalid move
 						}
 					}
-					ArrayList<ChessAction> list = new ArrayList<ChessAction>();
+					ArrayList<ChessAction> list = new ArrayList<ChessAction>(); 
 					
-					list.add(new ChessAction(firstsquare,"remove"));
-					list.add(new ChessAction(secondsquare,"remove"));
-					list.add(new ChessAction(board[rookcol1][row1],"remove"));
-					list.add(new ChessAction(emptyPiece.MovedPiece( rookcol2, row1),"remove"));
+					list.add(new ChessAction(firstsquare,"remove")); //remove king
+					list.add(new ChessAction(secondsquare,"remove")); //remove square he's moving to
+					list.add(new ChessAction(board[rookcol1][row1],"remove")); //remove rook
+					list.add(new ChessAction(emptyPiece.MovedPiece( rookcol2, row1),"remove")); //remove piece rook is moving to
 					
-					list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
-					list.add(new ChessAction(emptyPiece.MovedPiece( rookcol1, row1),"create"));
-					list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create"));
-					list.add(new ChessAction(board[rookcol1][row1].MovedPiece( rookcol2, row1),"create"));
+					list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create")); //make empty square where king used to be
+					list.add(new ChessAction(emptyPiece.MovedPiece( rookcol1, row1),"create")); //same for rook
+					list.add(new ChessAction(firstsquare.MovedPiece( col2, row2),"create")); //place king
+					list.add(new ChessAction(board[rookcol1][row1].MovedPiece( rookcol2, row1),"create")); //place rook
 					
 					return list;
 					
@@ -579,18 +621,18 @@ public class MovePiece {
 				
 				
 			}
-			return null;
+			return null; //not a castle, but just invalid move
 		}
 		
 		if ( firstsquare.pieceColor() == secondsquare.pieceColor()){
-			return null;
+			return null; //can't capture the same color piece.
 		}
 		
 		
 		
 		ArrayList<ChessAction> list = new ArrayList<ChessAction>();
 		
-		list.add(new ChessAction(firstsquare,"remove"));
+		list.add(new ChessAction(firstsquare,"remove")); //standard move, remove entry and exit, make new pieces. 
 		list.add(new ChessAction(secondsquare,"remove"));
 		
 		list.add(new ChessAction(emptyPiece.MovedPiece( col1, row1),"create"));
